@@ -1,0 +1,11 @@
+Model Information:
+* title:	Trash Bag v2 free
+* source:	https://sketchfab.com/3d-models/trash-bag-v2-free-9ef36ddf03bb4db99bc32a369cc2c871
+* author:	George B (https://sketchfab.com/JuliaSanzio)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Trash Bag v2 free" (https://sketchfab.com/3d-models/trash-bag-v2-free-9ef36ddf03bb4db99bc32a369cc2c871) by George B (https://sketchfab.com/JuliaSanzio) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

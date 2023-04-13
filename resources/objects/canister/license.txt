@@ -1,0 +1,11 @@
+Model Information:
+* title:	Canister_low_poly
+* source:	https://sketchfab.com/3d-models/canister-low-poly-f2e5fa066a9540af8c8212ea149239dd
+* author:	dupak88 (https://sketchfab.com/dupak88)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Canister_low_poly" (https://sketchfab.com/3d-models/canister-low-poly-f2e5fa066a9540af8c8212ea149239dd) by dupak88 (https://sketchfab.com/dupak88) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
