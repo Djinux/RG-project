@@ -12,6 +12,7 @@ d 1.000000
 illum 1
 map_Kd bare_branches_merged.png
 map_d bare_branches_merged.png
+map_Bump bare_branches_merged_normal.png
 
 newmtl bare_trunk
 Ns 127.999985
@@ -23,6 +24,7 @@ Ni 1.450000
 d 1.000000
 illum 1
 map_Kd trunk_seamless.png
+map_Bump trunk_Normal.png
 
 newmtl branches
 Ns 127.999985
@@ -46,3 +48,5 @@ Ni 1.450000
 d 1.000000
 illum 1
 map_Kd trunk_seamless.png
+map_Bump trunk_Normal.png
+

@@ -40,6 +40,15 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+struct DirLight {
+    glm::vec3 direction;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+}dirLight;
+
+
 struct PointLight {
     glm::vec3 position;
     glm::vec3 ambient;
@@ -49,7 +58,23 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
-};
+}pointLight;
+
+struct SpotLight {
+    glm::vec3 position;
+    glm::vec3 direction;
+    float cutOff;
+    float outerCutOff;
+
+    float constant;
+    float linear;
+    float quadratic;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+}spotLight;
+
 
 struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
@@ -99,6 +124,8 @@ void ProgramState::LoadFromFile(std::string filename) {
 
 ProgramState *programState;
 
+int flag = 1;
+
 void DrawImGui(ProgramState *programState);
 
 int main() {
@@ -137,7 +164,7 @@ int main() {
     }
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    //stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
 
     programState = new ProgramState;
     programState->LoadFromFile("resources/program_state.txt");
@@ -158,11 +185,14 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+//    Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+//    Shader nmShader("resources/shaders/normal_mapping.vs", "resources/shaders/normal_mapping.fs");
+    Shader pbShader("resources/shaders/bottle.vs", "resources/shaders/bottle.fs");
+    Shader trashShader("resources/shaders/trash.vs", "resources/shaders/trash.fs");
 
     // load models
     // -----------
@@ -187,8 +217,9 @@ int main() {
     Model oldCan("resources/objects/old_coca_cola_can/scene.gltf");
     oldCan.SetShaderTextureNamePrefix("material.");
 
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
+//    PointLight& pointLight = programState->pointLight;
+//    PointLight& pointLight = programState->pointLight;
+    pointLight.position = glm::vec3(-0.59, 2.0, -1.1);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
     pointLight.diffuse = glm::vec3(0.941, 0.933, 0.612);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
@@ -197,8 +228,27 @@ int main() {
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
+    dirLight.direction = glm::vec3(-0.2, -1.0, -0.3);
+    dirLight.ambient = glm::vec3(0.05, 0.05, -0.05);
+    dirLight.diffuse = glm::vec3(0.4, 0.4, 0.4);
+    dirLight.specular = glm::vec3( 0.5, 0.5, 0.5);
+
+    spotLight.position = programState->camera.Position;
+    spotLight.direction = programState->camera.Front;
+    spotLight.ambient = glm::vec3(0.0, 0.0, 0.0);
+    spotLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
+    spotLight.ambient = glm::vec3(1.0, 1.0, 1.0);
+
+    spotLight.constant = 1.0f;
+    spotLight.linear = 0.09f;
+    spotLight.quadratic = 0.032f;
+
+    spotLight.cutOff = glm::cos(glm::radians(12.5f));
+    spotLight.outerCutOff = glm::cos(glm::radians(15.0f));
+
+    
+    
     programState->camera.Position = glm::vec3(1.0f);
-    pointLight.position = glm::vec3(-0.58, 2.0, -1.1);
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -226,286 +276,464 @@ int main() {
 
 
         //Dusty Road
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
+
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.0025));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.0025));    // it's a bit too big for nm scene, so scale it down
+        trashShader.setMat4("model", model);
+        ourModel.Draw(trashShader);
+
 
 
         // Dumpster
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         // view/projection transformations
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-1.2, 0.0, 0.0)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
         model = glm::scale(model, glm::vec3(0.012));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        dumpster.Draw(ourShader);
+        trashShader.setMat4("model", model);
+        dumpster.Draw(trashShader);
 
 
         // Oak Tree
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(2.0, 0.0, -3.0)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.15));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        tree.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.15));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        tree.Draw(trashShader);
 
 
         // Trash Bag
 
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-1.0, 0.21, 0.9)); // translate it down so it's at the center of the scene
         //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.3));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        trashBag.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.3));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        trashBag.Draw(trashShader);
 
         // Streetlight
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-1.2, 1.2, -1.1)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.1));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        streetLight.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.1));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        streetLight.Draw(trashShader);
 
 
         // Pile
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-1.5, -0.05, -1.7)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.7));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        pile.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.7));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        pile.Draw(trashShader);
 
 
         // Oil Barrel
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(1.3, 0.01, 1.0)); // translate it down so it's at the center of the scene
         //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
-        //model = glm::scale(model, glm::vec3(0.1));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        oilBarrel.Draw(ourShader);
+        //model = glm::scale(model, glm::vec3(0.1));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        oilBarrel.Draw(trashShader);
 
 
         // Canister
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(1.85, 1.75, -1.05)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(0.0, 1.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.009));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        canister.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.009));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        canister.Draw(trashShader);
 
 
         // Old CocaCola Can
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        trashShader.use();
+        trashShader.setInt("flag", flag);
+        trashShader.setVec3("dirLight.direction", dirLight.direction);
+        trashShader.setVec3("dirLight.ambient", dirLight.ambient);
+        trashShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        trashShader.setVec3("dirLight.specular", dirLight.specular);
+
+        trashShader.setVec3("pointLight.position", pointLight.position);
+        trashShader.setVec3("pointLight.ambient", pointLight.ambient);
+        trashShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        trashShader.setVec3("pointLight.specular", pointLight.specular);
+        trashShader.setFloat("pointLight.constant", pointLight.constant);
+        trashShader.setFloat("pointLight.linear", pointLight.linear);
+        trashShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        trashShader.setVec3("spotLight.position", programState->camera.Position);
+        trashShader.setVec3("spotLight.direction", programState->camera.Front);
+        trashShader.setVec3("spotLight.ambient", spotLight.ambient);
+        trashShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        trashShader.setVec3("spotLight.specular", spotLight.specular);
+        trashShader.setFloat("spotLight.constant", spotLight.constant);
+        trashShader.setFloat("spotLight.linear", spotLight.linear);
+        trashShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        trashShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        trashShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        trashShader.setVec3("viewPos", programState->camera.Position);
+        trashShader.setFloat("material.shininess", 32.0);
         // view/projection transformations
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        trashShader.setMat4("projection", projection);
+        trashShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-0.54, 0.08, -0.5)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.1));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        oldCan.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.1));    // it's a bit too big for trash scene, so scale it down
+        trashShader.setMat4("model", model);
+        oldCan.Draw(trashShader);
 
 
         // Plastic Bottle
-        ourShader.use();
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        glEnable(GL_BLEND);
+        pbShader.use();
+        pbShader.setInt("flag", flag);
+        pbShader.setVec3("dirLight.direction", dirLight.direction);
+        pbShader.setVec3("dirLight.ambient", dirLight.ambient);
+        pbShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        pbShader.setVec3("dirLight.specular", dirLight.specular);
+
+        pbShader.setVec3("pointLight.position", pointLight.position);
+        pbShader.setVec3("pointLight.ambient", pointLight.ambient);
+        pbShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        pbShader.setVec3("pointLight.specular", pointLight.specular);
+        pbShader.setFloat("pointLight.constant", pointLight.constant);
+        pbShader.setFloat("pointLight.linear", pointLight.linear);
+        pbShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        pbShader.setVec3("spotLight.position", programState->camera.Position);
+        pbShader.setVec3("spotLight.direction", programState->camera.Front);
+        pbShader.setVec3("spotLight.ambient", spotLight.ambient);
+        pbShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        pbShader.setVec3("spotLight.specular", spotLight.specular);
+        pbShader.setFloat("spotLight.constant", spotLight.constant);
+        pbShader.setFloat("spotLight.linear", spotLight.linear);
+        pbShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        pbShader.setFloat("spotLight.cutOff", spotLight.cutOff);
+        pbShader.setFloat("spotLight.outerCutOff", spotLight.outerCutOff);
+
+        pbShader.setVec3("viewPos", programState->camera.Position);
+        pbShader.setFloat("material.shininess", 32.0);
         // view/projection transformations
         projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                       (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        pbShader.setMat4("projection", projection);
+        pbShader.setMat4("view", view);
 
         // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.25, 0.01, 0.0)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0, 1.0, 0.0));
-        model = glm::scale(model, glm::vec3(0.01));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        plasticBottle.Draw(ourShader);
+        model = glm::scale(model, glm::vec3(0.01));    // it's a bit too big for pb scene, so scale it down
+        pbShader.setMat4("model", model);
+        plasticBottle.Draw(pbShader);
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.4, 0.02, -0.5)); // translate it down so it's at the center of the scene
         model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(0.0, 1.0, 0.0));
         model = glm::scale(model, glm::vec3(0.01));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        plasticBottle.Draw(ourShader);
+        pbShader.setMat4("model", model);
+        plasticBottle.Draw(pbShader);
 
+        glDisable(GL_BLEND);
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
 
-        
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -537,6 +765,17 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, 2*deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, 2*deltaTime);
+
+
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+        flag = 1;
+    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+        flag = 2;
+    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+        flag = 3;
+
+
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
