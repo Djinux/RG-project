@@ -68,9 +68,9 @@ void main()
     vec3 result = vec3(0.0);
     if (flag == 1){
     result += CalcDirLight(dirLight, norm, viewDir);
-    }else if (flag == 2){
+    } else if (flag == 2){
     result += CalcPointLight(pointLight, norm, FragPos, viewDir);
-    }else{
+    } else {
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
     }
 

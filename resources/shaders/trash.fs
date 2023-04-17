@@ -63,6 +63,7 @@ void main()
 {
     // properties
 
+    // discard blending applying on grass and trees
     if(texture(material.diffuse, TexCoords).a < 0.1){
         discard;
     }

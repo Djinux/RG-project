@@ -13,6 +13,7 @@
 #include <rg/Error.h>
 #include <common.h>
 #include <glm/glm.hpp>
+
 class Shader {
     unsigned int m_Id;
 public:
@@ -135,8 +136,6 @@ public:
         glDeleteProgram(m_Id);
         m_Id = 0;
     }
-
-
 
 };
 
