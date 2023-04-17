@@ -22,5 +22,5 @@ U nedostatku modela koji imaju sve potrebne mape, morala sam ovako da se snadjem
 
 PS: Definitivno bih volela da doradim projekad za sledeci rok.
 
-1. youtube: 
-2. github: 
+1. youtube: https://www.youtube.com/watch?v=NPP9Tg04Imk&ab_channel=arabella2317 
+2. github: https://github.com/Djinux/RG-project.git
