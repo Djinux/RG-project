@@ -16,11 +16,10 @@ Kretanje je isto kao u project_base-u (w, a, s, d).
     2. primenjena blend f-ja prilikom crtanja modela "Plastic Bottle" - i pritom promenjena alpha vrednost flase u shader-u kako bi bila providnija
 3. Face culling: Napomena!!! Morao je biti disable-ovan pre crtanja modela "Pile" i enable-ovan nakon njegovog crtanja jer se model nije ponasao ocekivano.
 
-Oblast iz grupe A: Cubemap - ucitan je skybox (zvezdano nebo)
-Oblast iz grupe B: Normal Mapping and Parallax Mapping - efekti se mogu videti na modelu "Plank." Model je rucno nacrtan i na njega nalepljena tekstura koja je imala dostupnu mapu normala i visina.
+-Oblast iz grupe A: Cubemap - ucitan je skybox (zvezdano nebo)
+-Oblast iz grupe B: Normal Mapping and Parallax Mapping - efekti se mogu videti na modelu "Plank." Model je rucno nacrtan i na njega nalepljena tekstura koja je imala dostupnu mapu normala i visina.
 U nedostatku modela koji imaju sve potrebne mape, morala sam ovako da se snadjem. 
 
 PS: Definitivno bih volela da doradim projekad za sledeci rok.
 
 1. youtube: https://www.youtube.com/watch?v=NPP9Tg04Imk&ab_channel=arabella2317 
-2. github: https://github.com/Djinux/RG-project.git
